@@ -34,37 +34,34 @@ const LANG = {
       aiError: "리딩을 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
       newReading: "✦ 새로운 리딩 시작",
       back: "← 처음으로",
-      upright: "⟳ 정방향 (Upright)",
-      reversed: "⟲ 역방향 (Reversed)",
-      dirLabel: (r) => r ? "역방향" : "정방향",
-      tarotMatch: "타로 대응",
+      upright: "✨ 긍정적 흐름",
+      reversed: "🔄 도전적 흐름",
+      dirLabel: (r) => r ? "도전적 흐름" : "긍정적 흐름",
+      tarotMatch: "상징",
       freeReading: "(자유 리딩 - 특별한 질문 없음)",
     },
-    aiSystem: `당신은 30년 경력의 전문 타로 마스터이자 심리 상담가입니다. 플레잉 카드(트럼프 카드) 기반의 카르토만시(Cartomancy) 전통에 깊이 정통하며, 융(Jung)의 원형 심리학과 동양 철학에도 조예가 깊습니다.
+    aiSystem: `당신은 30년 경력의 전문 타로 상담사입니다. 플레잉 카드 기반 카르토만시(Cartomancy) 전문가입니다.
 
 핵심 원칙:
-- 카드 한 장이라도 최소 400자 이상 깊이 있게 해석합니다.
-- 단순한 키워드 나열이 아닌, 고객의 질문과 연결된 구체적인 이야기를 풀어냅니다.
-- 카드의 숫자, 문양(수트), 방향(정/역)이 가진 상징적 의미를 풍부하게 설명합니다.
-- 각 카드가 다른 카드와 어떻게 대화하는지 관계성을 분석합니다.
-- 마지막에 반드시 구체적이고 실용적인 행동 조언을 포함합니다.
-- 마크다운 문법(**, ##, --- 등)을 절대 사용하지 마세요. 순수한 텍스트로만 작성합니다.
+- 뜬구름 잡는 말 없이, 질문자의 상황에 바로 적용할 수 있는 구체적인 해석을 합니다.
+- "정방향/역방향" 같은 전문용어를 쓰지 마세요. 대신 카드의 에너지가 긍정적인지, 도전적인지를 자연스럽게 설명합니다.
+- 각 카드 해석은 3-4문장으로 핵심만 간결하게.
+- 마크다운 문법(**, ##, --- 등)을 절대 사용하지 마세요. 순수 텍스트만.
+- "~의 에너지가 느껴집니다" 같은 모호한 표현 대신 "~하세요", "~할 때입니다" 같은 직접적 조언을 하세요.
 
-어조:
-- 따뜻하지만 권위 있는 전문가의 목소리
-- 존댓말 사용 ("~입니다", "~하시네요", "~보입니다")
-- 고객을 "당신" 또는 "질문자님"으로 호칭
-- 신비롭지만 허황되지 않은, 현실에 기반한 조언
+구조:
+1. 한 줄 핵심 메시지 (이 리딩을 한마디로 요약)
+2. 각 카드별 간결한 해석 (포지션명과 함께, 각 3-4문장)
+3. 종합 조언 (구체적 행동 2가지)
+4. 반드시 마지막에 아래 형식으로 3줄 요약을 넣으세요:
 
-해석 구조:
-1. 전체 에너지 읽기 (카드 배열 전체에서 느껴지는 분위기와 핵심 메시지)
-2. 각 포지션별 상세 해석 (카드의 상징, 수트의 원소적 의미, 숫자의 의미를 포함)
-3. 카드 간 연결 분석 (어떤 카드들이 서로 호응하거나 긴장을 만드는지)
-4. 종합 메시지 (전체적인 흐름과 방향성)
-5. 구체적 행동 조언 (오늘/이번 주/이번 달 할 수 있는 구체적 행동 2-3가지)
+[오늘의 핵심]
+1. (첫 번째 핵심 메시지)
+2. (두 번째 핵심 메시지)  
+3. (세 번째 핵심 메시지)
 
-원카드의 경우에도 절대 짧게 끝내지 말고, 그 한 장에 담긴 모든 층위의 의미를 풍부하게 풀어주세요.`,
-    aiUserPrompt: (spread, question, cards) => `스프레드: ${spread}\n질문: ${question}\n\n뽑힌 카드:\n${cards}\n\n위 카드들을 기반으로 전문적이고 깊이 있는 타로 리딩을 해주세요. 마크다운 문법을 사용하지 말고 순수한 텍스트로만 작성해주세요. 끊기지 않게 완결된 해석을 제공해주세요.`,
+말투는 따뜻한 존댓말이되, 짧고 명확하게.`,
+    aiUserPrompt: (spread, question, cards) => `스프레드: ${spread}\n질문: ${question}\n\n뽑힌 카드:\n${cards}\n\n간결하고 구체적인 타로 리딩을 해주세요. 뜬구름 잡는 말 없이 핵심만. 마크다운 문법 금지. 반드시 마지막에 [오늘의 핵심] 3줄 요약으로 마무리해주세요.`,
   },
   vi: {
     flag: "🇻🇳", label: "Tiếng Việt",
@@ -97,37 +94,34 @@ const LANG = {
       aiError: "Đã xảy ra lỗi khi tải kết quả. Vui lòng thử lại sau.",
       newReading: "✦ Bắt đầu lượt mới",
       back: "← Trang chủ",
-      upright: "⟳ Xuôi (Upright)",
-      reversed: "⟲ Ngược (Reversed)",
-      dirLabel: (r) => r ? "Ngược" : "Xuôi",
-      tarotMatch: "Tarot tương ứng",
+      upright: "✨ Thuận lợi",
+      reversed: "🔄 Thử thách",
+      dirLabel: (r) => r ? "Thử thách" : "Thuận lợi",
+      tarotMatch: "Biểu tượng",
       freeReading: "(Đọc tự do - không có câu hỏi cụ thể)",
     },
-    aiSystem: `Bạn là một bậc thầy Tarot chuyên nghiệp với 30 năm kinh nghiệm, thông thạo truyền thống Cartomancy dựa trên bài tây. Bạn cũng am hiểu tâm lý học nguyên mẫu Jung và triết học phương Đông.
+    aiSystem: `Bạn là nhà tư vấn Tarot chuyên nghiệp 30 năm kinh nghiệm, chuyên về Cartomancy dựa trên bài tây.
 
-Nguyên tắc cốt lõi:
-- Dù chỉ một lá bài cũng phải giải thích sâu sắc, tối thiểu 400 từ.
-- Không chỉ liệt kê từ khóa mà phải kể một câu chuyện liên kết với câu hỏi của khách hàng.
-- Giải thích phong phú ý nghĩa biểu tượng của số, chất bài (suit) và hướng bài (xuôi/ngược).
-- Phân tích cách các lá bài "đối thoại" với nhau.
-- Luôn kết thúc bằng lời khuyên hành động cụ thể và thực tế.
-- KHÔNG sử dụng cú pháp Markdown (**, ##, --- v.v.). Chỉ viết văn bản thuần.
+Nguyên tắc:
+- Không nói chung chung. Đưa ra lời khuyên cụ thể, áp dụng được ngay.
+- Không dùng thuật ngữ chuyên môn như "xuôi/ngược". Thay vào đó mô tả tự nhiên năng lượng tích cực hay thử thách.
+- Mỗi lá bài giải thích 3-4 câu, ngắn gọn và trọng tâm.
+- KHÔNG dùng Markdown (**, ##, ---). Chỉ văn bản thuần.
+- Thay vì "năng lượng này cho thấy...", hãy nói "bạn nên...", "đây là lúc để...".
 
-Giọng điệu:
-- Ấm áp nhưng có uy tín chuyên gia
-- Sử dụng ngôn ngữ lịch sự, tôn trọng
-- Gọi khách hàng là "bạn" hoặc "người hỏi"
-- Huyền bí nhưng không viển vông, lời khuyên dựa trên thực tế
+Cấu trúc:
+1. Một câu tóm tắt toàn bộ bài đọc
+2. Giải thích từng lá bài (tên vị trí + 3-4 câu)
+3. Lời khuyên hành động cụ thể (2 việc)
+4. Bắt buộc kết thúc bằng:
 
-Cấu trúc giải bài:
-1. Đọc năng lượng tổng thể (bầu không khí và thông điệp chính từ toàn bộ bài)
-2. Giải thích chi tiết từng vị trí (bao gồm biểu tượng lá bài, ý nghĩa nguyên tố, ý nghĩa con số)
-3. Phân tích kết nối giữa các lá (lá nào hòa hợp, lá nào tạo căng thẳng)
-4. Thông điệp tổng hợp (hướng đi và xu hướng tổng thể)
-5. Lời khuyên hành động cụ thể (2-3 việc cụ thể có thể làm hôm nay/tuần này/tháng này)
+[Tóm tắt hôm nay]
+1. (Điểm chính thứ nhất)
+2. (Điểm chính thứ hai)
+3. (Điểm chính thứ ba)
 
-Ngay cả khi chỉ có một lá bài, hãy khai thác mọi tầng ý nghĩa sâu sắc, không bao giờ viết ngắn gọn.`,
-    aiUserPrompt: (spread, question, cards) => `Kiểu trải bài: ${spread}\nCâu hỏi: ${question}\n\nCác lá bài đã rút:\n${cards}\n\nDựa trên các lá bài trên, hãy đưa ra bài đọc tarot chuyên sâu và chuyên nghiệp. Không sử dụng Markdown, chỉ viết văn bản thuần. Hãy viết hoàn chỉnh, không bị cắt ngang.`,
+Giọng ấm áp, lịch sự nhưng ngắn gọn và rõ ràng.`,
+    aiUserPrompt: (spread, question, cards) => `Kiểu trải bài: ${spread}\nCâu hỏi: ${question}\n\nCác lá bài:\n${cards}\n\nGiải bài ngắn gọn, cụ thể, không chung chung. Không Markdown. Bắt buộc kết thúc bằng [Tóm tắt hôm nay] 3 dòng.`,
   },
 };
 
@@ -975,43 +969,53 @@ const cssText = `
     margin: 18px auto;
   }
 
-  .card-reading-item {
+  /* ─── Card Readings Grid (horizontal) ─── */
+  .card-readings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin: 30px 0;
+  }
+  .card-reading-card {
     background: linear-gradient(160deg, rgba(22,22,48,0.8), rgba(14,14,28,0.9));
     border: 1px solid rgba(212,168,83,0.08);
     border-radius: 20px;
-    padding: 28px;
-    margin-bottom: 16px;
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
+    padding: 20px 16px;
+    text-align: center;
     animation: readingItemIn 0.6s ease;
     transition: all 0.3s;
     backdrop-filter: blur(10px);
   }
-  .card-reading-item:hover {
+  .card-reading-card:hover {
     border-color: rgba(212,168,83,0.2);
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transform: translateY(-4px);
   }
   @keyframes readingItemIn {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .card-reading-info { flex: 1; }
+  .card-reading-top {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .card-reading-bottom { }
   .card-reading-position {
     font-size: 11px;
     color: var(--gold);
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     margin-bottom: 8px;
     text-transform: uppercase;
   }
   .card-reading-name {
-    font-size: 20px;
+    font-size: 16px;
     margin-bottom: 6px;
     font-weight: 700;
   }
   .card-reading-direction {
     font-size: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     letter-spacing: 1px;
     display: inline-block;
     padding: 3px 12px;
@@ -1026,14 +1030,9 @@ const cssText = `
     background: rgba(230,57,90,0.1);
   }
   .card-reading-meaning {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
-    line-height: 1.9;
-  }
-  .card-reading-element {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 10px;
+    line-height: 1.8;
   }
 
   /* ─── AI Interpretation ─── */
@@ -1173,6 +1172,7 @@ const cssText = `
     .card-corner .rank-text { font-size: 12px; }
     .card-corner .suit-text { font-size: 10px; }
     .card-reading-item { flex-direction: column; align-items: center; text-align: center; }
+    .card-readings-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
     .celtic-layout { gap: 4px; }
     .content { padding: 12px; }
     .draw-fan { gap: 1px; }
@@ -1629,31 +1629,32 @@ export default function TarotApp() {
 
       {renderSelectedCards()}
 
-      {/* Individual card readings */}
-      {drawnCards.map((card, i) => {
-        if (!flippedCards[i]) return null;
-        const cardName = getCardName(card);
-        const dir = cardDirections[i];
-        const meaning = getCardMeaning(card, dir);
-        const suitInfo = getSuitInfo(card);
-        const position = spreadInfo.positions?.[i] || selectedSpread.positions[i];
-        return (
-          <div key={i} className="card-reading-item" style={{ animationDelay: `${i * 0.15}s` }}>
-            <PlayingCard card={card} isReversed={dir} flipped={true} small />
-            <div className="card-reading-info">
-              <div className="card-reading-position">{position}</div>
-              <div className="card-reading-name">{cardName}</div>
-              <div className={`card-reading-direction ${dir ? "reversed" : "upright"}`}>
-                {dir ? t.ui.reversed : t.ui.upright}
+      {/* Individual card readings - horizontal grid */}
+      <div className="card-readings-grid">
+        {drawnCards.map((card, i) => {
+          if (!flippedCards[i]) return null;
+          const cardName = getCardName(card);
+          const dir = cardDirections[i];
+          const meaning = getCardMeaning(card, dir);
+          const suitInfo = getSuitInfo(card);
+          const position = spreadInfo.positions?.[i] || selectedSpread.positions[i];
+          return (
+            <div key={i} className="card-reading-card" style={{ animationDelay: `${i * 0.12}s` }}>
+              <div className="card-reading-top">
+                <PlayingCard card={card} isReversed={dir} flipped={true} small />
               </div>
-              <div className="card-reading-meaning">{meaning}</div>
-              <div className="card-reading-element">
-                {card.suit.symbol} {suitInfo.element} — {t.ui.tarotMatch}: {suitInfo.tarot}
+              <div className="card-reading-bottom">
+                <div className="card-reading-position">{position}</div>
+                <div className="card-reading-name">{cardName}</div>
+                <div className={`card-reading-direction ${dir ? "reversed" : "upright"}`}>
+                  {dir ? t.ui.reversed : t.ui.upright}
+                </div>
+                <div className="card-reading-meaning">{meaning}</div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {/* AI Reading */}
       <div className="ai-reading">
