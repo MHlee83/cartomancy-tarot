@@ -1,6 +1,204 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── Card Data ───
+// ─── i18n ───
+const LANG = {
+  ko: {
+    flag: "🇰🇷", label: "한국어",
+    suits: {
+      hearts: { name: "하트", element: "감정·사랑", tarot: "컵" },
+      diamonds: { name: "다이아", element: "재물·현실", tarot: "펜타클" },
+      clubs: { name: "클로버", element: "성장·행동", tarot: "완드" },
+      spades: { name: "스페이드", element: "시련·지성", tarot: "소드" },
+      joker: { name: "조커", element: "무한·가능성", tarot: "바보(The Fool)" },
+    },
+    ranks: { A: "에이스", J: "잭", Q: "퀸", K: "킹", joker: "조커" },
+    spreads: {
+      one: { name: "원카드", subtitle: "오늘의 메시지", description: "한 장의 카드가 지금 이 순간 당신에게 전하는 메시지를 읽어드립니다.", positions: ["핵심 메시지"], unit: "장" },
+      three: { name: "쓰리카드", subtitle: "시간의 흐름", description: "과거의 원인, 현재의 상황, 미래의 방향을 세 장의 카드로 풀어냅니다.", positions: ["과거", "현재", "미래"], unit: "장" },
+      celtic: { name: "켈틱 크로스", subtitle: "깊은 통찰", description: "10장의 카드가 만들어내는 가장 깊고 정밀한 리딩입니다.", positions: ["현재 상황", "도전/장애물", "의식적 목표", "무의식적 영향", "과거의 영향", "가까운 미래", "자신의 태도", "주변 환경", "희망과 두려움", "최종 결과"], unit: "장" },
+      love: { name: "연애 스프레드", subtitle: "사랑의 지도", description: "다섯 장의 카드로 두 사람 사이의 감정, 장애물, 그리고 관계의 방향을 읽어냅니다.", positions: ["나의 감정", "상대의 감정", "관계의 현재", "장애물", "관계의 방향"], unit: "장" },
+    },
+    ui: {
+      title: "카르토만시",
+      selectSpread: "스프레드를 선택해주세요",
+      questionHint: "마음속 질문을 떠올려 보세요.\n질문이 구체적일수록 카드의 메시지도 명확해집니다.",
+      questionPlaceholder: "예: 올해 나의 커리어는 어떤 방향으로 흘러갈까요?",
+      shuffle: "✦ 카드 섞기",
+      skipQuestion: "질문 없이 바로 시작",
+      shuffling: "카드를 섞고 있습니다...",
+      selectCards: (r, c, t) => `카드를 ${r}장 더 선택해주세요 (${c}/${t})`,
+      readingResult: "「 리딩 결과 」",
+      aiTitle: "✦ 종합 리딩 ✦",
+      aiLoading: "카드의 메시지를 읽고 있습니다...",
+      aiError: "리딩을 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      newReading: "✦ 새로운 리딩 시작",
+      back: "← 처음으로",
+      upright: "⟳ 정방향 (Upright)",
+      reversed: "⟲ 역방향 (Reversed)",
+      dirLabel: (r) => r ? "역방향" : "정방향",
+      tarotMatch: "타로 대응",
+      freeReading: "(자유 리딩 - 특별한 질문 없음)",
+    },
+    aiSystem: `당신은 30년 경력의 전문 타로 마스터이자 심리 상담가입니다. 플레잉 카드(트럼프 카드) 기반의 카르토만시(Cartomancy) 전통에 깊이 정통하며, 융(Jung)의 원형 심리학과 동양 철학에도 조예가 깊습니다.
+
+핵심 원칙:
+- 카드 한 장이라도 최소 400자 이상 깊이 있게 해석합니다.
+- 단순한 키워드 나열이 아닌, 고객의 질문과 연결된 구체적인 이야기를 풀어냅니다.
+- 카드의 숫자, 문양(수트), 방향(정/역)이 가진 상징적 의미를 풍부하게 설명합니다.
+- 각 카드가 다른 카드와 어떻게 대화하는지 관계성을 분석합니다.
+- 마지막에 반드시 구체적이고 실용적인 행동 조언을 포함합니다.
+- 마크다운 문법(**, ##, --- 등)을 절대 사용하지 마세요. 순수한 텍스트로만 작성합니다.
+
+어조:
+- 따뜻하지만 권위 있는 전문가의 목소리
+- 존댓말 사용 ("~입니다", "~하시네요", "~보입니다")
+- 고객을 "당신" 또는 "질문자님"으로 호칭
+- 신비롭지만 허황되지 않은, 현실에 기반한 조언
+
+해석 구조:
+1. 전체 에너지 읽기 (카드 배열 전체에서 느껴지는 분위기와 핵심 메시지)
+2. 각 포지션별 상세 해석 (카드의 상징, 수트의 원소적 의미, 숫자의 의미를 포함)
+3. 카드 간 연결 분석 (어떤 카드들이 서로 호응하거나 긴장을 만드는지)
+4. 종합 메시지 (전체적인 흐름과 방향성)
+5. 구체적 행동 조언 (오늘/이번 주/이번 달 할 수 있는 구체적 행동 2-3가지)
+
+원카드의 경우에도 절대 짧게 끝내지 말고, 그 한 장에 담긴 모든 층위의 의미를 풍부하게 풀어주세요.`,
+    aiUserPrompt: (spread, question, cards) => `스프레드: ${spread}\n질문: ${question}\n\n뽑힌 카드:\n${cards}\n\n위 카드들을 기반으로 전문적이고 깊이 있는 타로 리딩을 해주세요. 마크다운 문법을 사용하지 말고 순수한 텍스트로만 작성해주세요. 끊기지 않게 완결된 해석을 제공해주세요.`,
+  },
+  vi: {
+    flag: "🇻🇳", label: "Tiếng Việt",
+    suits: {
+      hearts: { name: "Cơ", element: "Cảm xúc·Tình yêu", tarot: "Cốc" },
+      diamonds: { name: "Rô", element: "Tài chính·Thực tế", tarot: "Pentacle" },
+      clubs: { name: "Chuồn", element: "Phát triển·Hành động", tarot: "Gậy" },
+      spades: { name: "Bích", element: "Thử thách·Trí tuệ", tarot: "Kiếm" },
+      joker: { name: "Joker", element: "Vô hạn·Tiềm năng", tarot: "Kẻ Ngốc (The Fool)" },
+    },
+    ranks: { A: "Át", J: "Bồi", Q: "Đầm", K: "Già", joker: "Joker" },
+    spreads: {
+      one: { name: "Một lá", subtitle: "Thông điệp hôm nay", description: "Một lá bài truyền tải thông điệp dành cho bạn ngay lúc này.", positions: ["Thông điệp chính"], unit: "lá" },
+      three: { name: "Ba lá", subtitle: "Dòng chảy thời gian", description: "Quá khứ, hiện tại và tương lai được hé lộ qua ba lá bài.", positions: ["Quá khứ", "Hiện tại", "Tương lai"], unit: "lá" },
+      celtic: { name: "Celtic Cross", subtitle: "Thấu hiểu sâu sắc", description: "10 lá bài tạo nên bài đọc sâu sắc và chính xác nhất.", positions: ["Tình huống hiện tại", "Thách thức", "Mục tiêu ý thức", "Ảnh hưởng tiềm thức", "Ảnh hưởng quá khứ", "Tương lai gần", "Thái độ bản thân", "Môi trường xung quanh", "Hy vọng và nỗi sợ", "Kết quả cuối cùng"], unit: "lá" },
+      love: { name: "Tình yêu", subtitle: "Bản đồ tình yêu", description: "Năm lá bài hé lộ cảm xúc, trở ngại và hướng đi của mối quan hệ.", positions: ["Cảm xúc của tôi", "Cảm xúc đối phương", "Hiện tại mối quan hệ", "Trở ngại", "Hướng đi mối quan hệ"], unit: "lá" },
+    },
+    ui: {
+      title: "Cartomancy",
+      selectSpread: "Vui lòng chọn kiểu trải bài",
+      questionHint: "Hãy nghĩ về câu hỏi trong lòng bạn.\nCâu hỏi càng cụ thể, thông điệp từ lá bài càng rõ ràng.",
+      questionPlaceholder: "VD: Sự nghiệp của tôi năm nay sẽ đi theo hướng nào?",
+      shuffle: "✦ Xào bài",
+      skipQuestion: "Bắt đầu không cần câu hỏi",
+      shuffling: "Đang xào bài...",
+      selectCards: (r, c, t) => `Vui lòng chọn thêm ${r} lá (${c}/${t})`,
+      readingResult: "「 Kết quả 」",
+      aiTitle: "✦ Giải bài tổng hợp ✦",
+      aiLoading: "Đang đọc thông điệp từ các lá bài...",
+      aiError: "Đã xảy ra lỗi khi tải kết quả. Vui lòng thử lại sau.",
+      newReading: "✦ Bắt đầu lượt mới",
+      back: "← Trang chủ",
+      upright: "⟳ Xuôi (Upright)",
+      reversed: "⟲ Ngược (Reversed)",
+      dirLabel: (r) => r ? "Ngược" : "Xuôi",
+      tarotMatch: "Tarot tương ứng",
+      freeReading: "(Đọc tự do - không có câu hỏi cụ thể)",
+    },
+    aiSystem: `Bạn là một bậc thầy Tarot chuyên nghiệp với 30 năm kinh nghiệm, thông thạo truyền thống Cartomancy dựa trên bài tây. Bạn cũng am hiểu tâm lý học nguyên mẫu Jung và triết học phương Đông.
+
+Nguyên tắc cốt lõi:
+- Dù chỉ một lá bài cũng phải giải thích sâu sắc, tối thiểu 400 từ.
+- Không chỉ liệt kê từ khóa mà phải kể một câu chuyện liên kết với câu hỏi của khách hàng.
+- Giải thích phong phú ý nghĩa biểu tượng của số, chất bài (suit) và hướng bài (xuôi/ngược).
+- Phân tích cách các lá bài "đối thoại" với nhau.
+- Luôn kết thúc bằng lời khuyên hành động cụ thể và thực tế.
+- KHÔNG sử dụng cú pháp Markdown (**, ##, --- v.v.). Chỉ viết văn bản thuần.
+
+Giọng điệu:
+- Ấm áp nhưng có uy tín chuyên gia
+- Sử dụng ngôn ngữ lịch sự, tôn trọng
+- Gọi khách hàng là "bạn" hoặc "người hỏi"
+- Huyền bí nhưng không viển vông, lời khuyên dựa trên thực tế
+
+Cấu trúc giải bài:
+1. Đọc năng lượng tổng thể (bầu không khí và thông điệp chính từ toàn bộ bài)
+2. Giải thích chi tiết từng vị trí (bao gồm biểu tượng lá bài, ý nghĩa nguyên tố, ý nghĩa con số)
+3. Phân tích kết nối giữa các lá (lá nào hòa hợp, lá nào tạo căng thẳng)
+4. Thông điệp tổng hợp (hướng đi và xu hướng tổng thể)
+5. Lời khuyên hành động cụ thể (2-3 việc cụ thể có thể làm hôm nay/tuần này/tháng này)
+
+Ngay cả khi chỉ có một lá bài, hãy khai thác mọi tầng ý nghĩa sâu sắc, không bao giờ viết ngắn gọn.`,
+    aiUserPrompt: (spread, question, cards) => `Kiểu trải bài: ${spread}\nCâu hỏi: ${question}\n\nCác lá bài đã rút:\n${cards}\n\nDựa trên các lá bài trên, hãy đưa ra bài đọc tarot chuyên sâu và chuyên nghiệp. Không sử dụng Markdown, chỉ viết văn bản thuần. Hãy viết hoàn chỉnh, không bị cắt ngang.`,
+  },
+};
+
+const CARD_MEANINGS_VI = {
+  hearts: {
+    A: { upright: "Tình yêu mới, khởi đầu cảm xúc, niềm vui tràn đầy", reversed: "Trống rỗng cảm xúc, tình yêu trì hoãn, xung đột nội tâm" },
+    2: { upright: "Mối quan hệ hài hòa, đối tác, hiểu biết lẫn nhau", reversed: "Mất cân bằng, thiếu giao tiếp, xung đột" },
+    3: { upright: "Ăn mừng, tình bạn, hợp tác sáng tạo, tin vui", reversed: "Hưởng thụ quá mức, lãng phí, quan hệ hời hợt" },
+    4: { upright: "Bất mãn với sự ổn định, thờ ơ, cần đánh giá lại", reversed: "Động lực mới, chấp nhận thay đổi" },
+    5: { upright: "Mất mát, buồn bã, hối tiếc, bám víu quá khứ", reversed: "Phục hồi, tha thứ, khả năng bắt đầu mới" },
+    6: { upright: "Hoài niệm, ký ức ngây thơ, hạnh phúc quá khứ", reversed: "Mắc kẹt trong quá khứ, kỳ vọng phi thực tế" },
+    7: { upright: "Ảo tưởng, bối rối lựa chọn, cám dỗ, mơ và thực", reversed: "Lựa chọn rõ ràng, quyết đoán, đối mặt thực tế" },
+    8: { upright: "Ra đi, từ bỏ, tìm kiếm ý nghĩa sâu sắc hơn", reversed: "Bám víu, không thể rời đi, sợ hãi" },
+    9: { upright: "Ước nguyện thành tựu, mãn nguyện, giàu có cảm xúc", reversed: "Bất mãn, tham lam, chủ nghĩa vật chất" },
+    10: { upright: "Hạnh phúc trọn vẹn, gia đình hòa thuận, đầy đủ tình cảm", reversed: "Bất hòa gia đình, rạn nứt quan hệ" },
+    J: { upright: "Thanh niên giàu cảm xúc, tin lãng mạn, thông điệp trực giác", reversed: "Chưa trưởng thành cảm xúc, trốn tránh thực tế" },
+    Q: { upright: "Người phụ nữ trực giác, khả năng đồng cảm, trí tuệ cảm xúc", reversed: "Thao túng cảm xúc, phụ thuộc" },
+    K: { upright: "Người lãnh đạo giàu cảm xúc, cố vấn khôn ngoan, rộng lượng", reversed: "Kìm nén cảm xúc, thái độ thao túng" },
+  },
+  diamonds: {
+    A: { upright: "Cơ hội tài chính mới, khởi đầu vật chất, hạt giống thịnh vượng", reversed: "Bỏ lỡ cơ hội, bất ổn tài chính, tham lam" },
+    2: { upright: "Cân bằng, ứng phó linh hoạt, quản lý đa nhiệm", reversed: "Mất cân bằng, quá tải, rối loạn ưu tiên" },
+    3: { upright: "Nâng cao kỹ năng, làm việc nhóm, tinh thần thợ lành nghề", reversed: "Bình thường, thiếu động lực, giảm chất lượng" },
+    4: { upright: "Ổn định, bảo thủ, an toàn tài chính, sở hữu", reversed: "Bám víu quá mức, keo kiệt, từ chối thay đổi" },
+    5: { upright: "Khó khăn tài chính, vấn đề sức khỏe, cô lập, nghèo khó", reversed: "Dấu hiệu phục hồi, bàn tay giúp đỡ, cải thiện" },
+    6: { upright: "Hào phóng, chia sẻ, cân bằng tài chính, cho và nhận", reversed: "Nợ nần, giao dịch bất công, ích kỷ" },
+    7: { upright: "Kiên nhẫn, đầu tư dài hạn, chờ đợi kết quả", reversed: "Nóng vội, đầu tư sai, bỏ cuộc" },
+    8: { upright: "Tinh thần thợ lành nghề, rèn luyện kỹ năng, nỗ lực đều đặn", reversed: "Hoàn hảo chủ nghĩa, nhàm chán, mất đam mê" },
+    9: { upright: "Thịnh vượng, tự lập, xa xỉ, đạt mục tiêu, tự do tài chính", reversed: "Phô trương, hư danh, phụ thuộc tài chính" },
+    10: { upright: "Di sản, thịnh vượng gia tộc, thành công dài hạn", reversed: "Xung đột tài chính gia đình, tranh chấp di sản" },
+    J: { upright: "Học sinh chăm chỉ, ý tưởng kinh doanh mới, thông điệp thực tế", reversed: "Kế hoạch phi thực tế, lười biếng" },
+    Q: { upright: "Phụ nữ thực tế, khả năng quản lý tài chính, hỗ trợ ổn định", reversed: "Chủ nghĩa vật chất, sở hữu, ghen tị" },
+    K: { upright: "Doanh nhân, thành công tài chính, lãnh đạo thực tế", reversed: "Tham lam, tham nhũng, chủ nghĩa tiền bạc" },
+  },
+  clubs: {
+    A: { upright: "Khởi đầu mới, cảm hứng, năng lượng sáng tạo, phiêu lưu", reversed: "Trì hoãn, mất phương hướng, thiếu năng lượng" },
+    2: { upright: "Giai đoạn lên kế hoạch, ngã ba quyết định, thiết kế tương lai", reversed: "Do dự, sợ hãi, kế hoạch sai lầm" },
+    3: { upright: "Mở rộng, phát triển, tầm nhìn thành hiện thực", reversed: "Sai hướng, mở rộng quá mức, thiếu chuẩn bị" },
+    4: { upright: "Ăn mừng, ổn định, niềm vui thành quả, hạnh phúc gia đình", reversed: "Bất ổn, sợ thay đổi" },
+    5: { upright: "Cạnh tranh, xung đột, va chạm ý kiến, thách thức", reversed: "Tránh xung đột, đấu tranh nội tâm, thỏa hiệp" },
+    6: { upright: "Chiến thắng, được công nhận, thành tựu công khai, tự tin", reversed: "Kiêu ngạo, thiếu khiêm tốn, thành công tạm thời" },
+    7: { upright: "Bảo vệ dũng cảm, giữ niềm tin, đối mặt thách thức", reversed: "Từ bỏ, bị áp đảo, mất tự tin" },
+    8: { upright: "Tiến triển nhanh, du lịch, thay đổi nhanh chóng", reversed: "Trì hoãn, thất vọng, kế hoạch trật bánh" },
+    9: { upright: "Kiên nhẫn, cảnh giác, thử thách cuối cùng, sức bền", reversed: "Nghi ngờ, hoang tưởng, phòng thủ quá mức" },
+    10: { upright: "Gánh nặng, trách nhiệm, quá tải, ý chí hoàn thành", reversed: "Buông bỏ gánh nặng, ủy thác, kiệt sức" },
+    J: { upright: "Thanh niên nhiệt huyết, tinh thần phiêu lưu, tin mới", reversed: "Liều lĩnh, hành động khinh suất" },
+    Q: { upright: "Phụ nữ tự tin, đam mê, sức hấp dẫn xã giao", reversed: "Ghen tị, hung hăng, ham muốn thống trị" },
+    K: { upright: "Lãnh đạo lôi cuốn, tầm nhìn, quyết định táo bạo", reversed: "Độc tài, nóng vội, thái độ bạo chúa" },
+  },
+  spades: {
+    A: { upright: "Phát hiện sự thật, đột phá, sáng suốt tinh thần", reversed: "Hỗn loạn, phán đoán sai, tư duy phá hoại" },
+    2: { upright: "Cân bằng, lựa chọn khó khăn, bế tắc, cần trực giác", reversed: "Quá tải thông tin, trốn tránh quyết định, tự lừa dối" },
+    3: { upright: "Chia ly, buồn bã, đau lòng, phản bội", reversed: "Phục hồi, tha thứ, vượt qua quá khứ" },
+    4: { upright: "Nghỉ ngơi, thiền định, thời kỳ phục hồi, cần nạp lại năng lượng", reversed: "Bất an, kiệt sức, từ chối nghỉ ngơi" },
+    5: { upright: "Xung đột, cảm giác thất bại, chiến thắng hèn nhát", reversed: "Hòa giải, thanh toán quá khứ, dũng cảm" },
+    6: { upright: "Giai đoạn chuyển tiếp, du hành, để khó khăn lại phía sau", reversed: "Trì trệ, vấn đề chưa giải quyết, kháng cự" },
+    7: { upright: "Chiến lược, hành động bí mật, tiếp cận khôn ngoan", reversed: "Tự lừa dối, hèn nhát, bị đánh cắp" },
+    8: { upright: "Trói buộc, hạn chế, bất lực, tư duy tự giới hạn", reversed: "Giải thoát, góc nhìn mới, thoát ra" },
+    9: { upright: "Lo âu, ác mộng, lo lắng sâu sắc, đau khổ tinh thần", reversed: "Phục hồi, hy vọng, tệ nhất đã qua" },
+    10: { upright: "Kết thúc, khép lại, thay đổi lớn, đỉnh điểm đau khổ", reversed: "Không phải không thể phục hồi, tái sinh, kháng cự" },
+    J: { upright: "Người quan sát sắc bén, tìm kiếm sự thật, thu thập thông tin", reversed: "Nói xấu, gián điệp, ngờ vực" },
+    Q: { upright: "Phụ nữ độc lập, phán đoán sáng suốt, người nói sự thật", reversed: "Lạnh lùng, thiên kiến, cô lập" },
+    K: { upright: "Quyền uy trí tuệ, phán đoán công bằng, lãnh đạo phân tích", reversed: "Tàn nhẫn, lạm dụng quyền lực, thao túng" },
+  },
+};
+
+const JOKER_MEANING_VI = {
+  upright: "Tiềm năng vô hạn, khởi đầu hành trình mới, tiềm năng thuần khiết, linh hồn tự do",
+  reversed: "Liều lĩnh, mất phương hướng, lựa chọn ngu ngốc, phiêu lưu khinh suất",
+};
+
 const SUITS = [
   { id: "hearts", symbol: "♥", color: "#e63946", name: "하트", element: "감정·사랑", tarot: "컵" },
   { id: "diamonds", symbol: "♦", color: "#f4a261", name: "다이아", element: "재물·현실", tarot: "펜타클" },
@@ -868,6 +1066,40 @@ const cssText = `
     color: #e63946;
     margin: 20px 0;
   }
+
+  /* Language Toggle */
+  .lang-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 6px;
+    background: rgba(26, 26, 46, 0.9);
+    border: 1px solid rgba(212,168,83,0.2);
+    border-radius: 24px;
+    padding: 4px;
+    backdrop-filter: blur(10px);
+  }
+  .lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Noto Serif KR', serif;
+  }
+  .lang-btn.active {
+    background: rgba(212,168,83,0.2);
+    color: var(--gold);
+  }
+  .lang-btn:hover { color: var(--gold-light); }
 `;
 
 // ─── Card Component ───
@@ -928,7 +1160,27 @@ export default function TarotApp() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
   const [allFlipped, setAllFlipped] = useState(false);
+  const [lang, setLang] = useState("ko");
   const shuffleTimerRef = useRef(null);
+
+  const t = LANG[lang];
+
+  // Helper: get localized card info
+  const getCardName = (card) => {
+    if (card.suit.id === "joker") return lang === "ko" ? "조커 (The Fool)" : "Joker (The Fool)";
+    const suitName = t.suits[card.suit.id]?.name || card.suit.name;
+    const rankName = t.ranks[card.rank.id] || card.rank.name;
+    return `${suitName} ${rankName}`;
+  };
+  const getCardMeaning = (card, isReversed) => {
+    if (lang === "vi") {
+      const viMeaning = card.suit.id === "joker" ? JOKER_MEANING_VI : CARD_MEANINGS_VI[card.suit.id]?.[card.rank.id];
+      if (viMeaning) return isReversed ? viMeaning.reversed : viMeaning.upright;
+    }
+    return isReversed ? card.meaning.reversed : card.meaning.upright;
+  };
+  const getSpread = (spread) => t.spreads[spread.id] || {};
+  const getSuitInfo = (card) => t.suits[card.suit.id] || {};
 
   // ─── Handlers ───
   const selectSpread = (spread) => {
@@ -1021,40 +1273,21 @@ export default function TarotApp() {
     setAiLoading(true);
     setAiError("");
 
+    const ls = t;
+    const spreadInfo = getSpread(selectedSpread);
+
     const cardsInfo = drawnCards.map((card, i) => {
-      const dir = cardDirections[i] ? "역방향" : "정방향";
-      const meaning = cardDirections[i] ? card.meaning.reversed : card.meaning.upright;
-      const position = selectedSpread.positions[i];
-      const isJoker = card.suit.id === "joker";
-      const cardName = isJoker ? "조커 (The Fool)" : `${card.suit.name} ${card.rank.name}`;
-      return `[${position}] ${cardName} (${dir}) - 기본 의미: ${meaning} / 원소: ${card.suit.element}`;
+      const dir = ls.ui.dirLabel(cardDirections[i]);
+      const meaning = getCardMeaning(card, cardDirections[i]);
+      const position = spreadInfo.positions?.[i] || selectedSpread.positions[i];
+      const cardName = getCardName(card);
+      const suitInfo = getSuitInfo(card);
+      return `[${position}] ${cardName} (${dir}) - ${meaning} / ${suitInfo.element}`;
     }).join("\n");
 
-    const systemPrompt = `당신은 30년 경력의 전문 타로 마스터입니다. 플레잉 카드(트럼프 카드) 기반의 카르토만시(Cartomancy) 전통에 깊이 정통합니다.
-
-당신의 역할:
-- 고객에게 깊이 있고 전문적인 타로 리딩을 제공합니다.
-- 각 카드의 의미를 포지션과 연결하여 해석합니다.
-- 카드들 사이의 관계와 흐름을 읽어냅니다.
-- 따뜻하지만 신비로운 어조로 말합니다.
-- 구체적이고 실용적인 조언을 포함합니다.
-- 한국어로 답변합니다.
-
-해석 구조:
-1. 전체적인 에너지/인상 (2-3문장)
-2. 각 카드 포지션별 상세 해석 (포지션명과 함께)
-3. 카드 간의 연결고리와 패턴 분석
-4. 종합 메시지와 조언
-
-말투는 존댓말을 사용하되, 너무 딱딱하지 않게 따뜻한 상담사의 느낌으로 해주세요. "~입니다", "~하시네요" 등의 자연스러운 존댓말을 사용하세요.`;
-
-    const userPrompt = `스프레드: ${selectedSpread.name} (${selectedSpread.subtitle})
-질문: ${question || "(자유 리딩 - 특별한 질문 없음)"}
-
-뽑힌 카드:
-${cardsInfo}
-
-위 카드들을 기반으로 전문적이고 깊이 있는 타로 리딩을 해주세요.`;
+    const systemPrompt = ls.aiSystem;
+    const spreadLabel = `${spreadInfo.name} (${spreadInfo.subtitle})`;
+    const userPrompt = ls.aiUserPrompt(spreadLabel, question || ls.ui.freeReading, cardsInfo);
 
     try {
       const response = await fetch("/.netlify/functions/tarot-reading", {
@@ -1075,7 +1308,7 @@ ${cardsInfo}
       setAiReading(text);
     } catch (err) {
       console.error(err);
-      setAiError("리딩을 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      setAiError(t.ui.aiError);
     } finally {
       setAiLoading(false);
     }
@@ -1099,12 +1332,14 @@ ${cardsInfo}
 
   const renderSelectedCards = () => {
     if (!selectedSpread) return null;
+    const spreadInfo = getSpread(selectedSpread);
+    const positions = spreadInfo.positions || selectedSpread.positions;
 
     // Celtic Cross uses a special layout
     if (selectedSpread.id === "celtic" && step === STEPS.READING) {
       return (
         <div className="celtic-layout">
-          {selectedSpread.positions.map((pos, i) => (
+          {positions.map((pos, i) => (
             <div key={i} className={`celtic-pos-${i} selected-slot`}>
               {drawnCards[i] ? (
                 <PlayingCard
@@ -1125,7 +1360,7 @@ ${cardsInfo}
 
     return (
       <div className="selected-cards-row">
-        {selectedSpread.positions.map((pos, i) => (
+        {positions.map((pos, i) => (
           <div key={i} className="selected-slot" style={{ animationDelay: `${i * 0.1}s` }}>
             {drawnCards[i] ? (
               <PlayingCard
@@ -1147,49 +1382,50 @@ ${cardsInfo}
   // ─── Pages ───
   const renderHome = () => (
     <div className="fade-in">
-      <p className="section-title">스프레드를 선택해주세요</p>
+      <p className="section-title">{t.ui.selectSpread}</p>
       <div className="spread-grid">
-        {SPREADS.map((s) => (
-          <div key={s.id} className="spread-card" onClick={() => selectSpread(s)}>
-            <div className="icon">{s.icon}</div>
-            <h3>{s.name}</h3>
-            <div className="subtitle">{s.subtitle}</div>
-            <div className="desc">{s.description}</div>
-            <div className="count">{s.count}장</div>
-          </div>
-        ))}
+        {SPREADS.map((s) => {
+          const ls = getSpread(s);
+          return (
+            <div key={s.id} className="spread-card" onClick={() => selectSpread(s)}>
+              <div className="icon">{s.icon}</div>
+              <h3>{ls.name}</h3>
+              <div className="subtitle">{ls.subtitle}</div>
+              <div className="desc">{ls.description}</div>
+              <div className="count">{s.count}{ls.unit}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 
-  const renderQuestion = () => (
+  const renderQuestion = () => {
+    const ls = getSpread(selectedSpread);
+    return (
     <div className="question-section">
-      <div className="question-label">「 {selectedSpread.name} 」 — {selectedSpread.subtitle}</div>
-      <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 20, lineHeight: 1.8 }}>
-        마음속 질문을 떠올려 보세요.<br />
-        질문이 구체적일수록 카드의 메시지도 명확해집니다.
+      <div className="question-label">「 {ls.name} 」 — {ls.subtitle}</div>
+      <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 20, lineHeight: 1.8, whiteSpace: "pre-line" }}>
+        {t.ui.questionHint}
       </p>
       <textarea
         className="question-input"
         rows={3}
-        placeholder="예: 올해 나의 커리어는 어떤 방향으로 흘러갈까요?"
+        placeholder={t.ui.questionPlaceholder}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
       />
       <br />
       <button className="btn" onClick={startShuffle}>
-        ✦ 카드 섞기
+        {t.ui.shuffle}
       </button>
       <br />
-      <button
-        className="btn btn-secondary"
-        style={{ marginTop: 10 }}
-        onClick={startShuffle}
-      >
-        질문 없이 바로 시작
+      <button className="btn btn-secondary" style={{ marginTop: 10 }} onClick={startShuffle}>
+        {t.ui.skipQuestion}
       </button>
     </div>
-  );
+    );
+  };
 
   const renderShuffle = () => (
     <div className="shuffle-area fade-in">
@@ -1217,10 +1453,11 @@ ${cardsInfo}
 
   const renderDraw = () => {
     const remaining = selectedSpread.count - drawnCards.length;
+    const spreadInfo = getSpread(selectedSpread);
     return (
       <div className="draw-area">
         <div className="draw-instructions">
-          카드를 {remaining}장 더 선택해주세요 ({drawnCards.length}/{selectedSpread.count})
+          {t.ui.selectCards(remaining, drawnCards.length, selectedSpread.count)}
         </div>
         {renderSelectedCards()}
         <div className="draw-fan">
@@ -1239,10 +1476,12 @@ ${cardsInfo}
     );
   };
 
-  const renderReading = () => (
+  const renderReading = () => {
+    const spreadInfo = getSpread(selectedSpread);
+    return (
     <div className="reading-section">
       <div className="reading-header">
-        <h2>「 리딩 결과 」</h2>
+        <h2>{t.ui.readingResult}</h2>
         <div className="reading-divider" />
         {question && (
           <p style={{ color: "var(--text-secondary)", fontSize: 13, fontStyle: "italic" }}>
@@ -1256,22 +1495,23 @@ ${cardsInfo}
       {/* Individual card readings */}
       {drawnCards.map((card, i) => {
         if (!flippedCards[i]) return null;
-        const isJoker = card.suit.id === "joker";
-        const cardName = isJoker ? "조커 (The Fool)" : `${card.suit.name} ${card.rank.name}`;
+        const cardName = getCardName(card);
         const dir = cardDirections[i];
-        const meaning = dir ? card.meaning.reversed : card.meaning.upright;
+        const meaning = getCardMeaning(card, dir);
+        const suitInfo = getSuitInfo(card);
+        const position = spreadInfo.positions?.[i] || selectedSpread.positions[i];
         return (
           <div key={i} className="card-reading-item" style={{ animationDelay: `${i * 0.15}s` }}>
             <PlayingCard card={card} isReversed={dir} flipped={true} small />
             <div className="card-reading-info">
-              <div className="card-reading-position">{selectedSpread.positions[i]}</div>
+              <div className="card-reading-position">{position}</div>
               <div className="card-reading-name">{cardName}</div>
               <div className={`card-reading-direction ${dir ? "reversed" : "upright"}`}>
-                {dir ? "⟲ 역방향 (Reversed)" : "⟳ 정방향 (Upright)"}
+                {dir ? t.ui.reversed : t.ui.upright}
               </div>
               <div className="card-reading-meaning">{meaning}</div>
               <div className="card-reading-element">
-                {card.suit.symbol} {card.suit.element} — 타로 대응: {card.suit.tarot}
+                {card.suit.symbol} {suitInfo.element} — {t.ui.tarotMatch}: {suitInfo.tarot}
               </div>
             </div>
           </div>
@@ -1280,7 +1520,7 @@ ${cardsInfo}
 
       {/* AI Reading */}
       <div className="ai-reading">
-        <h3>✦ 종합 리딩 ✦</h3>
+        <h3>{t.ui.aiTitle}</h3>
         {aiLoading && (
           <div className="ai-loading">
             <div className="ai-loading-dots">
@@ -1288,7 +1528,7 @@ ${cardsInfo}
               <div className="ai-loading-dot" />
               <div className="ai-loading-dot" />
             </div>
-            <div className="ai-loading-text">카드의 메시지를 읽고 있습니다...</div>
+            <div className="ai-loading-text">{t.ui.aiLoading}</div>
           </div>
         )}
         {aiError && <div className="error-box">{aiError}</div>}
@@ -1297,11 +1537,12 @@ ${cardsInfo}
 
       <div className="text-center mt-20">
         <button className="btn" onClick={goHome}>
-          ✦ 새로운 리딩 시작
+          {t.ui.newReading}
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -1311,11 +1552,20 @@ ${cardsInfo}
         <div className="bg-glow bg-glow-1" />
         <div className="bg-glow bg-glow-2" />
         <div className="content">
+          {/* Language Toggle */}
+          <div className="lang-toggle">
+            {Object.entries(LANG).map(([key, val]) => (
+              <button key={key} className={`lang-btn ${lang === key ? "active" : ""}`} onClick={() => setLang(key)}>
+                {val.flag}
+              </button>
+            ))}
+          </div>
+
           {/* Navigation */}
           {step !== STEPS.HOME && (
             <div className="nav-bar">
               <button className="nav-back" onClick={goHome}>
-                ← 처음으로
+                {t.ui.back}
               </button>
               {renderStepDots()}
             </div>
@@ -1324,7 +1574,7 @@ ${cardsInfo}
           {/* Header */}
           <div className="header">
             <div className="header-icon">✦ ✦ ✦</div>
-            <h1>카르토만시</h1>
+            <h1>{t.ui.title}</h1>
             <p>CARTOMANCY</p>
           </div>
 
